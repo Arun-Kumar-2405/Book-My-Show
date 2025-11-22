@@ -19,7 +19,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 echo "Running TestNG tests..."
-                sh './mvnw test'    // If you use Maven Wrapper
+                sh './mvnw test'
             }
         }
 
