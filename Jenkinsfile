@@ -18,9 +18,10 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                echo "Running TestNG tests..."
-                sh 'mvn clean test'
-            }
+        echo "Running npm tests..."
+        sh "npm install"
+        sh "npm test --if-present"
+    }
         }
 
         stage('Build Docker Image') {
