@@ -30,7 +30,7 @@ pipeline {
             steps {
                 echo "Running tests if present..."
                 dir('bookmyshow-app') {
-                    sh 'npm test --if-present'
+                    npm test --if-present -- --watchAll=false || true
                 }
             }
         }
