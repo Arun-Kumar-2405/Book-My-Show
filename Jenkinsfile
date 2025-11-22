@@ -19,7 +19,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 echo "Running TestNG tests..."
-                sh './mvnw test'
+                sh 'mvn clean test'
             }
         }
 
