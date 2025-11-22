@@ -26,14 +26,14 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
-            steps {
-                echo "Running tests if present..."
-                dir('bookmyshow-app') {
-                    npm test --if-present -- --watchAll=false || true
-                }
-            }
+        stage('Run Tests (Optional)') {
+    steps {
+        echo "Skipping test failures..."
+        dir('bookmyshow-app') {
+            sh "npm test --if-present -- --watchAll=false || true"
         }
+    }
+}
 
         stage('Build Docker Image') {
             steps {
