@@ -2,9 +2,10 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = "us-east-1"
-        ECR_REPO = "834863651684.dkr.ecr.us-east-1.amazonaws.com/bookmyshow"
-        IMAGE = "bookmyshow:latest"
+        AWS_ACCOUNT_ID = "834863651684"
+        AWS_REGION     = "us-east-1"
+        ECR_REPO       = "bookmyshow"
+        IMAGE_TAG      = "latest"
     }
 
     stages {
@@ -16,51 +17,68 @@ pipeline {
             }
         }
 
+        stage('Install NPM Dependencies') {
+            steps {
+                echo "Installing Node.js dependencies..."
+                dir('bookmyshow-app') {
+                    sh 'npm install'
+                }
+            }
+        }
+
         stage('Run Tests') {
             steps {
-        echo "Running npm tests..."
-        sh "npm install"
-        sh "npm test --if-present"
-    }
+                echo "Running tests if present..."
+                dir('bookmyshow-app') {
+                    sh 'npm test --if-present'
+                }
+            }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    sh "docker build -t ${IMAGE} ."
+                echo "Building Docker image..."
+                dir('bookmyshow-app') {
+                    sh """
+                    docker build -t ${ECR_REPO}:${IMAGE_TAG} .
+                    """
                 }
             }
         }
 
         stage('Login to AWS ECR') {
             steps {
-                withAWS(credentials: 'aws-creds', region: AWS_REGION) {
-                    sh """
-                    aws ecr get-login-password --region ${AWS_REGION} | \
-                    docker login --username AWS --password-stdin 834863651684.dkr.ecr.us-east-1.amazonaws.com
-                    """
-                }
+                echo "Logging in to AWS ECR..."
+                sh """
+                aws ecr get-login-password --region ${AWS_REGION} \
+                | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                """
             }
         }
 
         stage('Tag & Push Image to ECR') {
             steps {
+                echo "Tagging image..."
                 sh """
-                docker tag ${IMAGE} ${ECR_REPO}
-                docker push ${ECR_REPO}
+                docker tag ${ECR_REPO}:${IMAGE_TAG} \
+                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
+                """
+
+                echo "Pushing image to ECR..."
+                sh """
+                docker push \
+                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
                 """
             }
         }
 
         stage('Deploy to EKS using Ansible') {
             steps {
-                sshagent(credentials: ['ansible-ssh']) {
-                    sh """
-                    ansible-playbook /home/ubuntu/ansible/deploy.yml -i /home/ubuntu/ansible/inventory.ini
-                    """
-                }
+                echo "Deploying to EKS cluster via Ansible..."
+                sh """
+                ansible-playbook -i inventory deploy.yml
+                """
             }
         }
     }
 }
-
