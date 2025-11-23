@@ -79,7 +79,7 @@ pipeline {
             steps {
                 echo "Deploying to EKS cluster via Ansible..."
                 dir("${WORKSPACE}") {
-                    sh "ansible-playbook -i inventory deploy.yml"
+                    sh "ansible-playbook -i inventory deployment.yml"
                 }
             }
         }
