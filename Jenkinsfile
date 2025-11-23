@@ -76,12 +76,11 @@ pipeline {
         }
 
         stage('Deploy to EKS using Ansible') {
-            steps {
-                echo "Deploying to EKS cluster via Ansible..."
-                sh """
-                ansible-playbook -i inventory deploy.yml
-                """
-            }
+    steps {
+        echo "Deploying to EKS cluster via Ansible..."
+        dir("${WORKSPACE}") {
+            sh "ansible-playbook -i inventory deploy.yml"
         }
     }
+}
 }
