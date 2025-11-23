@@ -5,7 +5,7 @@ pipeline {
         AWS_ACCOUNT_ID = "834863651684"
         AWS_REGION     = "us-east-1"
         ECR_REPO       = "bookmyshow"
-        IMAGE_TAG      = "latest"
+        IMAGE_TAG      = "${env.BUILD_NUMBER}"   // <-- NEW TAG EVERY BUILD
     }
 
     stages {
@@ -40,7 +40,7 @@ pipeline {
                 echo "Building Docker image..."
                 dir('bookmyshow-app') {
                     sh """
-                    docker build -t ${ECR_REPO}:${IMAGE_TAG} .
+                        docker build -t ${ECR_REPO}:${IMAGE_TAG} .
                     """
                 }
             }
@@ -49,7 +49,7 @@ pipeline {
         stage('Login to AWS ECR') {
             steps {
                 echo "Logging in to AWS ECR..."
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
                                   credentialsId: 'aws-creds']]) {
                     sh '''
                         aws ecr get-login-password --region us-east-1 | \
@@ -61,16 +61,10 @@ pipeline {
 
         stage('Tag & Push Image to ECR') {
             steps {
-                echo "Tagging image..."
+                echo "Tagging & Pushing..."
                 sh """
-                docker tag ${ECR_REPO}:${IMAGE_TAG} \
-                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
-                """
-
-                echo "Pushing image to ECR..."
-                sh """
-                docker push \
-                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
+                    docker tag ${ECR_REPO}:${IMAGE_TAG} ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
+                    docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
                 """
             }
         }
@@ -79,12 +73,12 @@ pipeline {
             steps {
                 echo "Deploying to EKS cluster via Ansible..."
                 dir("${WORKSPACE}") {
-                    sh "ansible-playbook -i inventory deploy.yml"
+                    withEnv(["IMAGE_TAG=${IMAGE_TAG}"]) {   // <-- Pass tag to Ansible
+                        sh "ansible-playbook -i inventory deploy.yml"
+                    }
                 }
             }
         }
-
     }
-
 }
 
