@@ -3,6 +3,8 @@ FROM node:18 AS build
 
 WORKDIR /app
 
+ENV NODE_OPTIONS=--openssl-legacy-provider
+
 COPY package.json package-lock.json ./
 RUN npm install --legacy-peer-deps
 
