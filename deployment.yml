@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: bookmyshow
-          image: 834863651684.dkr.ecr.us-east-1.amazonaws.com/bookmyshow:latest
+          image: "834863651684.dkr.ecr.us-east-1.amazonaws.com/bookmyshow:latest"
+          imagePullPolicy: Always
           ports:
-            - containerPort: 3000
-
+            - containerPort: 80
