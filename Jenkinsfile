@@ -27,13 +27,13 @@ pipeline {
         }
 
         stage('Run Tests (Optional)') {
-    steps {
-        echo "Skipping test failures..."
-        dir('bookmyshow-app') {
-            sh "npm test --if-present -- --watchAll=false || true"
+            steps {
+                echo "Skipping test failures..."
+                dir('bookmyshow-app') {
+                    sh "npm test --if-present -- --watchAll=false || true"
+                }
+            }
         }
-    }
-}
 
         stage('Build Docker Image') {
             steps {
@@ -47,17 +47,17 @@ pipeline {
         }
 
         stage('Login to AWS ECR') {
-    steps {
-        echo "Logging in to AWS ECR..."
-        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-                          credentialsId: 'aws-creds']]) {
-            sh '''
-                aws ecr get-login-password --region us-east-1 | \
-                docker login --username AWS --password-stdin 834863651684.dkr.ecr.us-east-1.amazonaws.com
-            '''
+            steps {
+                echo "Logging in to AWS ECR..."
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
+                                  credentialsId: 'aws-creds']]) {
+                    sh '''
+                        aws ecr get-login-password --region us-east-1 | \
+                        docker login --username AWS --password-stdin 834863651684.dkr.ecr.us-east-1.amazonaws.com
+                    '''
+                }
+            }
         }
-    }
-}
 
         stage('Tag & Push Image to ECR') {
             steps {
@@ -76,11 +76,15 @@ pipeline {
         }
 
         stage('Deploy to EKS using Ansible') {
-    steps {
-        echo "Deploying to EKS cluster via Ansible..."
-        dir("${WORKSPACE}") {
-            sh "ansible-playbook -i inventory deploy.yml"
+            steps {
+                echo "Deploying to EKS cluster via Ansible..."
+                dir("${WORKSPACE}") {
+                    sh "ansible-playbook -i inventory deploy.yml"
+                }
+            }
         }
+
     }
+
 }
-}
+
