@@ -1,17 +1,22 @@
 - name: Deploy BookMyShow to EKS
   hosts: localhost
+  connection: local
+
   tasks:
+
+    - name: Apply Deployment Template
+      ansible.builtin.template:
+        src: deployment.yml.j2
+        dest: /tmp/deployment.yml
+      vars:
+        IMAGE_TAG: "{{ lookup('env','IMAGE_TAG') }}"
 
     - name: Apply Deployment
       kubernetes.core.k8s:
         state: present
-        namespace: default
-        src: deployment.yml
-        template:
-          IMAGE_TAG: "{{ lookup('env','IMAGE_TAG') }}"
+        src: /tmp/deployment.yml
 
     - name: Apply Service
       kubernetes.core.k8s:
         state: present
-        namespace: default
         src: service.yml
