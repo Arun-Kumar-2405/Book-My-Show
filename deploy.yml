@@ -1,13 +1,16 @@
+---
 - name: Deploy BookMyShow to EKS
-  hosts: local
+  hosts: localhost
   tasks:
 
     - name: Apply Deployment
       kubernetes.core.k8s:
         state: present
         src: deployment.yml
+        namespace: default
 
     - name: Apply Service
       kubernetes.core.k8s:
         state: present
         src: service.yml
+        namespace: default
